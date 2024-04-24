@@ -6,7 +6,7 @@ import {
   useMemo,
 } from 'react'
 import { useNodes } from 'reactflow'
-import { BlockEnum } from '../../types'
+import { BlockEnum, InputVarType } from '../../types'
 import {
   useStore,
   useWorkflowStore,
@@ -66,12 +66,25 @@ const ChatWrapper = forwardRef<ChatWrapperRefType>((_, ref) => {
     taskId => stopChatMessageResponding(appDetail!.id, taskId),
   )
 
+  const numberInputToNumber = (inputs: Record<string, any>) => {
+    const res: Record<string, any> = {}
+    Object.keys(inputs).forEach((key) => {
+      const value = inputs[key]
+      const inputType = (startVariables || []).find(variable => variable.variable === key)?.type
+      if (inputType === InputVarType.number)
+        res[key] = parseFloat(value as string)
+      else
+        res[key] = value
+    })
+    return res
+  }
+
   const doSend = useCallback<OnSend>((query, files) => {
     handleSend(
       {
         query,
         files,
-        inputs: workflowStore.getState().inputs,
+        inputs: numberInputToNumber(workflowStore.getState().inputs),
         conversation_id: conversationId,
       },
       {
